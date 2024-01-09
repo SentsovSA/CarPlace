@@ -1,3 +1,5 @@
+package viewmodel
+
 import dev.icerock.moko.mvvm.viewmodel.ViewModel
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -46,7 +48,7 @@ class CarImageViewModel: ViewModel() {
 
     private suspend fun getImages(): List<CarImage> {
         return httpClient
-            .get("https://polite-crabs-relax.loca.lt/api/storage/CarImageViewSet/")
+            .get("https://solid-ads-deny.loca.lt/api/storage/CarImageViewSet/")
             .body()
     }
 }
