@@ -48,7 +48,7 @@ class CarViewSetViewModel: ViewModel() {
 
     private suspend fun getInfo(): List<CarViewSet> {
         return httpClient
-            .get("https://solid-ads-deny.loca.lt/api/storage/CarViewSet/")
+            .get("https://tall-ends-grab.loca.lt/api/storage/CarViewSet/")
             .body()
     }
 }
