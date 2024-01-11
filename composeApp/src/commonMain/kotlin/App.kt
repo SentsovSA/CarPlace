@@ -22,6 +22,7 @@ import dev.icerock.moko.mvvm.compose.getViewModel
 import dev.icerock.moko.mvvm.compose.viewModelFactory
 import io.kamel.image.KamelImage
 import io.kamel.image.asyncPainterResource
+import kotlinx.coroutines.launch
 import model.CarImage
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
@@ -81,7 +82,16 @@ fun CarsPage(viewModel: CarImageViewModel, carsViewSetsVM: CarViewSetViewModel) 
                     .background(Color.White, shape = RoundedCornerShape(10.dp)),
                 content = {
                     items(uiState.images) {
-                        CarCard(it, carsViewSetsVM)
+                        if (uiState.images.isEmpty()) {
+                            val scope = rememberCoroutineScope()
+                            val snackbarHostState = remember { SnackbarHostState() }
+                            scope.launch {
+                                snackbarHostState.showSnackbar("Проверьте подключение к интернету")
+                            }
+                        } else {
+                            CarCard(it, carsViewSetsVM)
+                        }
+
                     }
                 }
             )
@@ -106,8 +116,7 @@ fun AutoPartChoose() {
             },
             shape = RoundedCornerShape(10.dp),
             modifier = Modifier
-                .weight(50f)
-                .padding(start = 2.dp, end = 2.dp),
+                .weight(50f),
             selected = selectedAuto,
             colors = ChipDefaults.filterChipColors(
                 if (selectedAuto) Color(0xFFFFFFFF) else Color(0xFFC5C5C5),
@@ -117,7 +126,7 @@ fun AutoPartChoose() {
                 text = "Автомобили",
                 modifier = Modifier
                     .weight(50f)
-                    .padding(start = 20.dp, end = 10.dp),
+                    .padding(horizontal = 10.dp, vertical = 10.dp),
                 fontSize = 20.sp,
                 fontWeight = FontWeight.SemiBold,
             )
@@ -129,8 +138,7 @@ fun AutoPartChoose() {
             },
             shape = RoundedCornerShape(10.dp),
             modifier = Modifier
-                .weight(50f)
-                .padding(start = 2.dp, end = 2.dp),
+                .weight(50f),
             selected = selectedParts,
             colors = ChipDefaults.filterChipColors(
                 if (selectedParts) Color(0xFFFFFFFF) else Color(0xFFC5C5C5),
@@ -143,7 +151,7 @@ fun AutoPartChoose() {
                 fontSize = 20.sp,
                 modifier = Modifier
                     .weight(50f)
-                    .padding(start = 2.dp, end = 10.dp),
+                    .padding(horizontal = 10.dp, vertical = 10.dp),
                 fontWeight = FontWeight.SemiBold
             )
         }
@@ -270,7 +278,7 @@ fun TopBar() {
         }
         TextField(
             value = text,
-            onValueChange = { text = it},
+            onValueChange = { text = it },
             readOnly = false,
             textStyle = TextStyle.Default.copy(fontSize = 15.sp),
             placeholder = { Text(text = "Поиск") },
@@ -307,6 +315,9 @@ fun TopBar() {
 @Composable
 fun CarCard(carImage: CarImage, carsViewSetsVM: CarViewSetViewModel) {
     val viewSetsUIState by carsViewSetsVM.uiState.collectAsState()
+    val price = carsViewSetsVM.uiState.value.info.find { it.carId == carImage.carID }?.price
+    val model = carsViewSetsVM.uiState.value.info.find { it.carId == carImage.carID }?.brand + " " +
+            carsViewSetsVM.uiState.value.info.find { it.carId == carImage.carID }?.model
     Card(
         elevation = 10.dp,
         shape = RoundedCornerShape(10.dp),
@@ -322,7 +333,7 @@ fun CarCard(carImage: CarImage, carsViewSetsVM: CarViewSetViewModel) {
                     .align(Alignment.CenterHorizontally),
                 fontSize = 20.sp,
                 fontWeight = FontWeight.W800,
-                text = carsViewSetsVM.uiState.value.info.find { it.carId == carImage.carID }?.price.toString(),
+                text = if (price != null) "$price ₽" else ""
             )
             Text(
                 modifier = Modifier
@@ -330,8 +341,7 @@ fun CarCard(carImage: CarImage, carsViewSetsVM: CarViewSetViewModel) {
                     .align(Alignment.CenterHorizontally),
                 textAlign = TextAlign.Center,
                 fontSize = 20.sp,
-                text = carsViewSetsVM.uiState.value.info.find { it.carId == carImage.carID }?.brand + " " +
-                    carsViewSetsVM.uiState.value.info.find { it.carId == carImage.carID }?.model
+                text = if (model != null) model else  ""
             )
         }
 

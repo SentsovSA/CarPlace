@@ -18,7 +18,7 @@ data class CarViewSetUiState(
     val info: List<CarViewSet> = emptyList()
 )
 
-class CarViewSetViewModel: ViewModel() {
+class CarViewSetViewModel : ViewModel() {
     private val _uiState = MutableStateFlow<CarViewSetUiState>(CarViewSetUiState())
     val uiState = _uiState.asStateFlow()
 
@@ -32,7 +32,7 @@ class CarViewSetViewModel: ViewModel() {
         httpClient.close()
     }
 
-    init{
+    init {
         updateInfo()
     }
 
@@ -41,14 +41,18 @@ class CarViewSetViewModel: ViewModel() {
             val info = getInfo()
             _uiState.update {
                 it.copy(info = info)
-
             }
         }
     }
 
     private suspend fun getInfo(): List<CarViewSet> {
-        return httpClient
-            .get("https://tall-ends-grab.loca.lt/api/storage/CarViewSet/")
-            .body()
+        try {
+            return httpClient
+                .get("https://famous-breads-bet.loca.lt/api/storage/CarViewSet/")
+                .body()
+        } catch (e: Exception) {
+            return emptyList()
+        }
+
     }
 }
