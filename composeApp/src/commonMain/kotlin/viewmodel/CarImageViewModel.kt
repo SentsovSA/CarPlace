@@ -48,7 +48,7 @@ class CarImageViewModel : ViewModel() {
     private suspend fun getImages(): List<CarImage> {
         try {
             return httpClient
-                .get("https://famous-breads-bet.loca.lt/api/storage/CarImageViewSet/")
+                .get("https://evil-paths-refuse.loca.lt/api/storage/CarImageViewSet/")
                 .body()
         } catch (e: Exception) {
             return emptyList()

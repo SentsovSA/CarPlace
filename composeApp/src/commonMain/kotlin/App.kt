@@ -1,25 +1,24 @@
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.BottomAppBar
 import androidx.compose.material.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Done
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.HorizontalAlignmentLine
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.font.*
 import androidx.compose.ui.text.style.TextAlign
-import dev.icerock.moko.mvvm.compose.getViewModel
-import dev.icerock.moko.mvvm.compose.viewModelFactory
+import cafe.adriel.voyager.navigator.bottomSheet.BottomSheetNavigator
+import cafe.adriel.voyager.navigator.bottomSheet.LocalBottomSheetNavigator
+import cafe.adriel.voyager.navigator.tab.CurrentTab
+import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
+import cafe.adriel.voyager.navigator.tab.Tab
+import cafe.adriel.voyager.navigator.tab.TabNavigator
 import io.kamel.image.KamelImage
 import io.kamel.image.asyncPainterResource
 import kotlinx.coroutines.launch
@@ -28,19 +27,37 @@ import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 import viewmodel.CarImageViewModel
 import viewmodel.CarViewSetViewModel
+import views.AddNewTab
+import views.HomeTab
+import views.LikedTab
+import views.MenuScreen
+import views.MessagesTab
+import views.ProfileTab
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun App() {
-    MaterialTheme(colors = MaterialTheme.colors.copy(background = Color(0xFFE3E3E3))) {
-        val carsImagesVM = getViewModel(Unit, viewModelFactory { CarImageViewModel() })
-        val carsViewSetsVM = getViewModel(Unit, viewModelFactory { CarViewSetViewModel() })
-        val scaffoldState = rememberScaffoldState(rememberDrawerState(DrawerValue.Closed))
+    val scaffoldState = rememberScaffoldState(rememberDrawerState(DrawerValue.Closed))
+    TabNavigator(HomeTab) {
         Scaffold(
             scaffoldState = scaffoldState,
             content = {
-                CarsPage(carsImagesVM, carsViewSetsVM)
+                BottomSheetNavigator(
+                    hideOnBackPress = true,
+                    sheetBackgroundColor = Color.Transparent
+                ) {
+                    CurrentTab()
+                }
             },
-            bottomBar = { BottomAppBarCars() },
+            bottomBar = {
+                BottomNavigation {
+                    TabNavigationItem(HomeTab)
+                    TabNavigationItem(AddNewTab)
+                    TabNavigationItem(MessagesTab)
+                    TabNavigationItem(LikedTab)
+                    TabNavigationItem(ProfileTab)
+                }
+            }
         )
     }
 }
@@ -48,40 +65,118 @@ fun App() {
 @Composable
 fun CarsPage(viewModel: CarImageViewModel, carsViewSetsVM: CarViewSetViewModel) {
     val uiState by viewModel.uiState.collectAsState()
-    Column(
-        modifier = Modifier
-            .padding(5.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Top
+    Scaffold(
+        drawerBackgroundColor = Color.White,
+        drawerShape = RoundedCornerShape(topEnd = 10.dp, bottomEnd = 10.dp),
     ) {
-        TopBar()
-        Spacer(
-            modifier = Modifier.padding(bottom = 15.dp)
-        )
-        AutoPartChoose()
-        Spacer(
-            modifier = Modifier.padding(bottom = 10.dp)
-        )
-        FilterButton()
-
-        Text(
+        LazyVerticalGrid(
+            userScrollEnabled = true,
+            columns = GridCells.Fixed(2),
+            horizontalArrangement = Arrangement.spacedBy(5.dp),
             modifier = Modifier
-                .padding(start = 5.dp, end = 5.dp, top = 5.dp, bottom = 5.dp)
-                .align(Alignment.CenterHorizontally),
-            fontSize = 20.sp,
-            fontWeight = FontWeight.SemiBold,
-            text = "Рекомендуем",
-        )
-        AnimatedVisibility(uiState.images.isNotEmpty()) {
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                horizontalArrangement = Arrangement.spacedBy(5.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 5.dp, end = 5.dp, top = 10.dp, bottom = 5.dp)
-                    .background(Color.White, shape = RoundedCornerShape(10.dp)),
-                content = {
-                    items(uiState.images) {
+                .fillMaxWidth()
+                .padding(start = 5.dp, end = 5.dp, top = 10.dp, bottom = 5.dp)
+        ) {
+            item(span = { GridItemSpan(2) }) {
+                TopBar()
+            }
+            item(span = { GridItemSpan(2) }) {
+                Spacer(
+                    modifier = Modifier
+                        .padding(bottom = 15.dp)
+                )
+            }
+            item(span = { GridItemSpan(2) }) {
+                AutoPartChoose()
+                Spacer(
+                    modifier = Modifier
+                        .padding(bottom = 10.dp)
+                )
+            }
+            item(span = { GridItemSpan(2) }) {
+                FilterButton()
+            }
+            item(span = { GridItemSpan(2) }) {
+                Text(
+                    modifier = Modifier
+                        .padding(start = 5.dp, end = 5.dp, top = 5.dp, bottom = 5.dp),
+                    textAlign = TextAlign.Center,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    fontFamily = FontFamily.SansSerif,
+                    text = "Рекомендуем",
+                )
+            }
+            items(
+                uiState.images,
+            ) {
+                if (uiState.images.isEmpty()) {
+                    val scope = rememberCoroutineScope()
+                    val snackbarHostState = remember { SnackbarHostState() }
+                    scope.launch {
+                        snackbarHostState.showSnackbar("Проверьте подключение к интернету")
+                    }
+                } else {
+                    CarCard(it, carsViewSetsVM)
+                }
+            }
+            items(
+                uiState.images,
+            ) {
+                if (uiState.images.isEmpty()) {
+                    val scope = rememberCoroutineScope()
+                    val snackbarHostState = remember { SnackbarHostState() }
+                    scope.launch {
+                        snackbarHostState.showSnackbar("Проверьте подключение к интернету")
+                    }
+                } else {
+                    CarCard(it, carsViewSetsVM)
+                }
+            }
+            items(
+                uiState.images,
+            ) {
+                if (uiState.images.isEmpty()) {
+                    val scope = rememberCoroutineScope()
+                    val snackbarHostState = remember { SnackbarHostState() }
+                    scope.launch {
+                        snackbarHostState.showSnackbar("Проверьте подключение к интернету")
+                    }
+                } else {
+                    CarCard(it, carsViewSetsVM)
+                }
+            }
+            items(
+                uiState.images,
+            ) {
+                if (uiState.images.isEmpty()) {
+                    val scope = rememberCoroutineScope()
+                    val snackbarHostState = remember { SnackbarHostState() }
+                    scope.launch {
+                        snackbarHostState.showSnackbar("Проверьте подключение к интернету")
+                    }
+                } else {
+                    CarCard(it, carsViewSetsVM)
+                }
+            }
+            /*item(span = { GridItemSpan(2) }) {
+                Column (
+                    verticalArrangement = Arrangement.Center,
+                ) {
+                    Text(
+                        modifier = Modifier
+                            .padding(start = 5.dp, end = 5.dp, top = 5.dp, bottom = 5.dp),
+                        textAlign = TextAlign.Center,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        fontFamily = FontFamily.SansSerif,
+                        text = "Рекомендуем",
+                    )
+            Row(
+                horizontalArrangement = Arrangement.SpaceAround
+            ) {
+                Column {
+                    for (i in uiState.images) {
                         if (uiState.images.isEmpty()) {
                             val scope = rememberCoroutineScope()
                             val snackbarHostState = remember { SnackbarHostState() }
@@ -89,12 +184,23 @@ fun CarsPage(viewModel: CarImageViewModel, carsViewSetsVM: CarViewSetViewModel) 
                                 snackbarHostState.showSnackbar("Проверьте подключение к интернету")
                             }
                         } else {
-                            CarCard(it, carsViewSetsVM)
+                            CarCard(i, carsViewSetsVM)
                         }
-
                     }
                 }
-            )
+                Column {
+                    for (i in uiState.images) {
+                        if (uiState.images.isEmpty()) {
+                            val scope = rememberCoroutineScope()
+                            val snackbarHostState = remember { SnackbarHostState() }
+                            scope.launch {
+                                snackbarHostState.showSnackbar("Проверьте подключение к интернету")
+                            }
+                        } else {
+                            CarCard(i, carsViewSetsVM)
+                        }
+                    }
+                }*/
         }
     }
 }
@@ -106,8 +212,9 @@ fun AutoPartChoose() {
     var selectedParts by remember { mutableStateOf(false) }
     Row(
         modifier = Modifier
-            .background(color = Color(0xFFC5C5C5), shape = RoundedCornerShape(10.dp))
-            .padding(5.dp)
+            .padding(start = 5.dp, end = 5.dp, top = 15.dp, bottom = 15.dp)
+            .background(color = Color(0xFFC5C5C5), shape = RoundedCornerShape(10.dp)),
+        verticalAlignment = Alignment.CenterVertically
     ) {
         FilterChip(
             onClick = {
@@ -116,6 +223,7 @@ fun AutoPartChoose() {
             },
             shape = RoundedCornerShape(10.dp),
             modifier = Modifier
+                .padding(start = 10.dp)
                 .weight(50f),
             selected = selectedAuto,
             colors = ChipDefaults.filterChipColors(
@@ -124,9 +232,7 @@ fun AutoPartChoose() {
         ) {
             Text(
                 text = "Автомобили",
-                modifier = Modifier
-                    .weight(50f)
-                    .padding(horizontal = 10.dp, vertical = 10.dp),
+                modifier = Modifier,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.SemiBold,
             )
@@ -138,6 +244,7 @@ fun AutoPartChoose() {
             },
             shape = RoundedCornerShape(10.dp),
             modifier = Modifier
+                .padding(end = 10.dp)
                 .weight(50f),
             selected = selectedParts,
             colors = ChipDefaults.filterChipColors(
@@ -146,12 +253,10 @@ fun AutoPartChoose() {
 
         ) {
             Text(
-                textAlign = TextAlign.Center,
+                textAlign = TextAlign.End,
                 text = "Запчасти",
                 fontSize = 20.sp,
-                modifier = Modifier
-                    .weight(50f)
-                    .padding(horizontal = 10.dp, vertical = 10.dp),
+                modifier = Modifier,
                 fontWeight = FontWeight.SemiBold
             )
         }
@@ -178,7 +283,7 @@ fun FilterButton() {
                 .weight(90f)
         )
         Icon(
-            painterResource("icons8-filter-100.png"),
+            painterResource("icons/icons8-filter-100.png"),
             contentDescription = "Filter",
             modifier = Modifier
                 .padding(start = 5.dp, end = 5.dp)
@@ -196,83 +301,56 @@ fun CarImageCell(image: CarImage) {
         modifier = Modifier
             .fillMaxWidth()
             .aspectRatio(1.0f)
-            .background(Color.Transparent, shape = RoundedCornerShape(10.dp))
+            .padding(5.dp)
     )
 }
 
-@OptIn(ExperimentalResourceApi::class)
 @Composable
-fun BottomAppBarCars() {
-    BottomAppBar(
-        backgroundColor = Color(0xFFE3E3E3)
-    ) {
-        IconButton(
-            onClick = {},
-            modifier = Modifier.weight(20f)
-        ) {
-            Icon(
-                painterResource("icons8-home-100.png"),
-                contentDescription = "Add new"
-            )
-        }
-        IconButton(
-            onClick = {},
-            modifier = Modifier.weight(20f)
-        ) {
-            Icon(
-                painterResource("icons8-add-new-100.png"),
-                contentDescription = "Add new"
-            )
-        }
-        IconButton(
-            onClick = {},
-            modifier = Modifier.weight(20f)
-        ) {
-            Icon(
-                painterResource("icons8-message-100.png"),
-                contentDescription = "Messages"
-            )
-        }
-        IconButton(
-            onClick = {},
-            modifier = Modifier.weight(20f)
-        ) {
-            Icon(
-                painterResource("icons8-heart-100.png"),
-                contentDescription = "Messages"
-            )
-        }
-        IconButton(
-            onClick = {},
-            modifier = Modifier.weight(20f)
-        ) {
-            Icon(
-                painterResource("icons8-person-100.png"),
-                contentDescription = "Messages"
-            )
-        }
-    }
+private fun RowScope.TabNavigationItem(tab: Tab) {
+    val tabNavigator = LocalTabNavigator.current
+
+    BottomNavigationItem(
+        selected = tabNavigator.current == tab,
+        onClick = { tabNavigator.current = tab },
+        icon = {
+            tab.options.icon?.let {
+                Icon(
+                    painter = it,
+                    contentDescription = tab.options.title
+                )
+            }
+        },
+        modifier = Modifier
+            .weight(20f)
+            .background(color = Color(0xFFE3E3E3))
+            .padding(5.dp),
+        unselectedContentColor = Color(0xFF5c5c5c),
+        selectedContentColor = Color.Black
+    )
 }
 
 @OptIn(ExperimentalResourceApi::class)
 @Composable
 fun TopBar() {
     var text by remember { mutableStateOf("") }
+    val bottomSheetNavigator = LocalBottomSheetNavigator.current
     Row(
         modifier = Modifier
             .background(Color(0xFFFFFFFF), shape = RoundedCornerShape(10.dp))
-            .padding(start = 10.dp, end = 10.dp, top = 5.dp, bottom = 5.dp)
+            .padding(5.dp)
     )
     {
         IconButton(
-            onClick = {},
+            onClick = {
+                bottomSheetNavigator.show(MenuScreen())
+            },
             modifier = Modifier
                 .weight(10f)
                 .padding(horizontal = 5.dp)
                 .align(Alignment.CenterVertically),
         ) {
             Icon(
-                painterResource("icons8-menu-100.png"),
+                painterResource("icons/icons8-menu-100.png"),
                 contentDescription = "menu",
             )
         }
@@ -304,7 +382,7 @@ fun TopBar() {
                 .align(Alignment.CenterVertically),
         ) {
             Icon(
-                painterResource("icons8-search-100.png"),
+                painterResource("icons/icons8-search-100.png"),
                 contentDescription = "search"
             )
         }
@@ -331,7 +409,7 @@ fun CarCard(carImage: CarImage, carsViewSetsVM: CarViewSetViewModel) {
                 modifier = Modifier
                     .padding(horizontal = 5.dp, vertical = 2.dp)
                     .align(Alignment.CenterHorizontally),
-                fontSize = 20.sp,
+                fontSize = 16.sp,
                 fontWeight = FontWeight.W800,
                 text = if (price != null) "$price ₽" else ""
             )
@@ -340,8 +418,8 @@ fun CarCard(carImage: CarImage, carsViewSetsVM: CarViewSetViewModel) {
                     .padding(horizontal = 5.dp, vertical = 2.dp)
                     .align(Alignment.CenterHorizontally),
                 textAlign = TextAlign.Center,
-                fontSize = 20.sp,
-                text = if (model != null) model else  ""
+                fontSize = 14.sp,
+                text = if (model != null) model else ""
             )
         }
 

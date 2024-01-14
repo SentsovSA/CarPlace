@@ -46,6 +46,8 @@ kotlin {
             implementation("io.ktor:ktor-client-content-negotiation:2.3.5")
             implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.5")
             implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
+            implementation("cafe.adriel.voyager:voyager-tab-navigator:1.0.0")
+            implementation("cafe.adriel.voyager:voyager-bottom-sheet-navigator:1.0.0")
             api("dev.icerock.moko:mvvm-core:0.16.1") // only ViewModel, EventsDispatcher, Dispatchers.UI
             api("dev.icerock.moko:mvvm-compose:0.16.1")
         }

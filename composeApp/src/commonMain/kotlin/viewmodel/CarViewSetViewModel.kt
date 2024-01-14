@@ -48,7 +48,7 @@ class CarViewSetViewModel : ViewModel() {
     private suspend fun getInfo(): List<CarViewSet> {
         try {
             return httpClient
-                .get("https://famous-breads-bet.loca.lt/api/storage/CarViewSet/")
+                .get("https://evil-paths-refuse.loca.lt/api/storage/CarViewSet/")
                 .body()
         } catch (e: Exception) {
             return emptyList()
