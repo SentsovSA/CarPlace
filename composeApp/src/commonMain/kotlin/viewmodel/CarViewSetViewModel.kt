@@ -45,10 +45,12 @@ class CarViewSetViewModel : ViewModel() {
         }
     }
 
+    fun refresh() = updateInfo()
+
     private suspend fun getInfo(): List<CarViewSet> {
         try {
             return httpClient
-                .get("https://evil-paths-refuse.loca.lt/api/storage/CarViewSet/")
+                .get("https://little-ghosts-repair.loca.lt/api/storage/CarViewSet/")
                 .body()
         } catch (e: Exception) {
             return emptyList()

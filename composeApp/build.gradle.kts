@@ -50,6 +50,7 @@ kotlin {
             implementation("cafe.adriel.voyager:voyager-bottom-sheet-navigator:1.0.0")
             api("dev.icerock.moko:mvvm-core:0.16.1") // only ViewModel, EventsDispatcher, Dispatchers.UI
             api("dev.icerock.moko:mvvm-compose:0.16.1")
+            api("org.lighthousegames:logging:1.3.0")
         }
         iosMain.dependencies {
             implementation("io.ktor:ktor-client-darwin:2.3.5")

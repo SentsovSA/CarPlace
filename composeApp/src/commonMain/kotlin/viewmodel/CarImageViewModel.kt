@@ -6,12 +6,15 @@ import io.ktor.client.call.body
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
 import io.ktor.serialization.kotlinx.json.json
+import io.ktor.util.logging.Logger
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import model.CarImage
+import org.lighthousegames.logging.logging
+import kotlin.math.log
 
 @Serializable
 data class CarImageUiState(
@@ -44,11 +47,18 @@ class CarImageViewModel : ViewModel() {
             }
         }
     }
+    fun refresh() {
+        updateImages()
+    }
+
+    companion object {
+        val log = logging()
+    }
 
     private suspend fun getImages(): List<CarImage> {
         try {
             return httpClient
-                .get("https://evil-paths-refuse.loca.lt/api/storage/CarImageViewSet/")
+                .get("https://little-ghosts-repair.loca.lt/api/storage/CarImageViewSet/")
                 .body()
         } catch (e: Exception) {
             return emptyList()
