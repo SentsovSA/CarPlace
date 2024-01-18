@@ -6,23 +6,21 @@ import io.ktor.client.call.body
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
 import io.ktor.serialization.kotlinx.json.json
-import io.ktor.util.logging.Logger
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
-import model.CarImage
-import org.lighthousegames.logging.logging
-import kotlin.math.log
+import model.PartViewSet
+import viewmodel.CarImageViewModel.Companion.log
 
 @Serializable
-data class CarImageUiState(
-    val images: List<CarImage> = emptyList()
+data class PartViewSetUiState(
+    val info: List<PartViewSet> = emptyList()
 )
 
-class CarImageViewModel : ViewModel() {
-    private val _uiState = MutableStateFlow<CarImageUiState>(CarImageUiState())
+class PartViewSetViewModel : ViewModel() {
+    private val _uiState = MutableStateFlow<PartViewSetUiState>(PartViewSetUiState())
     val uiState = _uiState.asStateFlow()
 
     private val httpClient = HttpClient {
@@ -36,29 +34,24 @@ class CarImageViewModel : ViewModel() {
     }
 
     init {
-        updateImages()
+        updateInfo()
     }
 
-    private fun updateImages() {
+    private fun updateInfo() {
         viewModelScope.launch {
-            val images = getImages()
+            val info = getInfo()
             _uiState.update {
-                it.copy(images = images)
+                it.copy(info = info)
             }
         }
     }
-    fun refresh() {
-        updateImages()
-    }
 
-    companion object {
-        val log = logging()
-    }
+    fun refresh() = updateInfo()
 
-    private suspend fun getImages(): List<CarImage> {
+    private suspend fun getInfo(): List<PartViewSet> {
         return try {
             httpClient
-                .get("https://little-ghosts-repair.loca.lt/api/storage/CarImageViewSet/")
+                .get("https://little-ghosts-repair.loca.lt/api/storage/PartViewSet/")
                 .body()
         } catch (e: Exception) {
             log.e {"error: ${e.message}"}

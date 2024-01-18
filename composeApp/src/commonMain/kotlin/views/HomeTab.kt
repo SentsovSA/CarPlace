@@ -14,6 +14,8 @@ import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 import viewmodel.CarImageViewModel
 import viewmodel.CarViewSetViewModel
+import viewmodel.PartImageViewModel
+import viewmodel.PartViewSetViewModel
 
 object HomeTab : Tab, Screen {
     @Composable
@@ -23,7 +25,9 @@ object HomeTab : Tab, Screen {
         ) {
             val carsImagesVM = getViewModel(Unit, viewModelFactory { CarImageViewModel() })
             val carsViewSetsVM = getViewModel(Unit, viewModelFactory { CarViewSetViewModel() })
-            CarsPage(carsImagesVM, carsViewSetsVM)
+            val partsViewSetsVM = getViewModel(Unit, viewModelFactory { PartViewSetViewModel() })
+            val partImagesVM = getViewModel(Unit, viewModelFactory { PartImageViewModel() })
+            CarsPage(carsImagesVM, carsViewSetsVM, partsViewSetsVM, partImagesVM)
         }
     }
 

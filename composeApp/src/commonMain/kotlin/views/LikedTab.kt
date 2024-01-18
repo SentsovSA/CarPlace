@@ -13,6 +13,8 @@ import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 import viewmodel.CarImageViewModel
 import viewmodel.CarViewSetViewModel
+import viewmodel.PartImageViewModel
+import viewmodel.PartViewSetViewModel
 
 object LikedTab : Tab {
     @Composable
@@ -20,7 +22,9 @@ object LikedTab : Tab {
         MaterialTheme(colors = MaterialTheme.colors.copy(background = Color(0xFFE3E3E3))) {
             val carsImagesVM = getViewModel(Unit, viewModelFactory { CarImageViewModel() })
             val carsViewSetsVM = getViewModel(Unit, viewModelFactory { CarViewSetViewModel() })
-            CarsPage(carsImagesVM, carsViewSetsVM)
+            val partsViewSetsVM = getViewModel(Unit, viewModelFactory { PartViewSetViewModel() })
+            val partImagesVM = getViewModel(Unit, viewModelFactory { PartImageViewModel() })
+            CarsPage(carsImagesVM, carsViewSetsVM, partsViewSetsVM, partImagesVM)
         }
     }
 

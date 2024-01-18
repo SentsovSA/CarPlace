@@ -27,11 +27,14 @@ import io.kamel.image.asyncPainterResource
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import model.CarImage
+import model.PartImage
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 import viewmodel.CarImageViewModel
 import viewmodel.CarImageViewModel.Companion.log
 import viewmodel.CarViewSetViewModel
+import viewmodel.PartImageViewModel
+import viewmodel.PartViewSetViewModel
 import views.AddNewTab
 import views.HomeTab
 import views.LikedTab
@@ -46,8 +49,9 @@ fun App() {
     TabNavigator(HomeTab) {
         Scaffold(
             scaffoldState = scaffoldState,
-            content = {
+            content = { padding ->
                 BottomSheetNavigator(
+                    modifier = Modifier.padding(padding),
                     hideOnBackPress = true,
                     sheetBackgroundColor = Color.Transparent
                 ) {
@@ -69,15 +73,24 @@ fun App() {
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun CarsPage(carImagesVM: CarImageViewModel, carsViewSetsVM: CarViewSetViewModel) {
-    val imagesState by carImagesVM.uiState.collectAsState()
-    val infoState by carsViewSetsVM.uiState.collectAsState()
+fun CarsPage(
+    carImagesVM: CarImageViewModel,
+    carsViewSetsVM: CarViewSetViewModel,
+    partsViewSetsVM: PartViewSetViewModel,
+    partImagesVM: PartImageViewModel
+
+) {
+    val carImagesState by carImagesVM.uiState.collectAsState()
+    val carInfoState by carsViewSetsVM.uiState.collectAsState()
+    val partImagesState by partImagesVM.uiState.collectAsState()
+    val partInfoState by partsViewSetsVM.uiState.collectAsState()
     val refreshScope = rememberCoroutineScope()
     var refreshing by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
     val scaffoldState = rememberScaffoldState()
     fun refresh() = refreshScope.launch {
         refreshing = true
+        log.i {"refreshing..."}
         val carIVM = CarImageViewModel()
         val carVSVM = CarViewSetViewModel()
         carIVM.refresh()
@@ -85,6 +98,7 @@ fun CarsPage(carImagesVM: CarImageViewModel, carsViewSetsVM: CarViewSetViewModel
         delay(1000)
         refreshing = false
     }
+
     val state = rememberPullRefreshState(refreshing, ::refresh)
     Scaffold(
         drawerBackgroundColor = Color.White,
@@ -133,144 +147,83 @@ fun CarsPage(carImagesVM: CarImageViewModel, carsViewSetsVM: CarViewSetViewModel
                     text = "Рекомендуем",
                 )
             }
-            items(
-                imagesState.images
-            ) {
-                if (infoState.info.isEmpty() && imagesState.images.isEmpty()) {
-                    val scope = rememberCoroutineScope()
-                    scope.launch {
-                        val result = snackbarHostState.showSnackbar(
-                            message = "Проверьте подключение к интернету",
-                            actionLabel = "Обновить",
-                            duration = SnackbarDuration.Indefinite
-                        )
-                        when (result) {
-                            SnackbarResult.ActionPerformed -> {
-                                refresh()
+            item {
+                Column {
+                    for (i in carImagesState.images) {
+                        if (carInfoState.info.isEmpty() || carImagesState.images.isEmpty() ||
+                            partInfoState.info.isEmpty() || partImagesState.images.isEmpty()) {
+                            log.i {"smth empty"}
+                            val scope = rememberCoroutineScope()
+                            scope.launch {
+                                log.i {"carImage = " + carImagesState.images.size}
+                                log.i {"partImage = " + partImagesState.images.size}
+                                log.i {"carInfo = " + carInfoState.info.size}
+                                log.i {"partInfo = " + partInfoState.info.size}
+                                val result = snackbarHostState.showSnackbar(
+                                    message = "Проверьте подключение к интернету",
+                                    actionLabel = "Обновить",
+                                    duration = SnackbarDuration.Long
+                                )
+                                when (result) {
+                                    SnackbarResult.ActionPerformed -> {
+                                        log.i { "Action performed" }
+                                        refresh()
+                                    }
+                                    SnackbarResult.Dismissed -> {
+                                        log.i { "Dismissed" }
+                                    }
+                                }
                             }
-                            SnackbarResult.Dismissed -> {
-                                log.i { "Dismissed" }
-                            }
+                        } else {
+                            MultiCard(
+                                i,
+                                carsViewSetsVM,
+                                partsViewSetsVM,
+                                partImagesState.images[0],
+                                false
+                            )
                         }
-                    }
-                } else {
-                    CarCard(it, carsViewSetsVM)
-                }
-            }
-            items(
-                imagesState.images,
-            ) {
-                if (infoState.info.isEmpty() && imagesState.images.isEmpty()) {
-                    val scope = rememberCoroutineScope()
-                    scope.launch {
-                        val result = snackbarHostState.showSnackbar(
-                            message = "Проверьте подключение к интернету",
-                            actionLabel = "Обновить",
-                            duration = SnackbarDuration.Indefinite
-                        )
-                        when (result) {
-                            SnackbarResult.ActionPerformed -> {
-                                refresh()
-                            }
-                            SnackbarResult.Dismissed -> {
-                                log.i { "Dismissed" }
-                            }
-                        }
-                    }
-                } else {
-                    CarCard(it, carsViewSetsVM)
-                }
-            }
-            items(
-                imagesState.images,
-            ) {
-                if (infoState.info.isEmpty() && imagesState.images.isEmpty()) {
-                    val scope = rememberCoroutineScope()
-                    scope.launch {
-                        val result = snackbarHostState.showSnackbar(
-                            message = "Проверьте подключение к интернету",
-                            actionLabel = "Обновить",
-                            duration = SnackbarDuration.Indefinite
-                        )
-                        when (result) {
-                            SnackbarResult.ActionPerformed -> {
-                                refresh()
-                            }
-                            SnackbarResult.Dismissed -> {
-                                log.i { "Dismissed" }
-                            }
-                        }
-                    }
-                } else {
-                    CarCard(it, carsViewSetsVM)
-                }
-            }
-            items(
-                imagesState.images,
-            ) {
-                if (infoState.info.isEmpty() && imagesState.images.isEmpty()) {
-                    val scope = rememberCoroutineScope()
-                    scope.launch {
-                        val result = snackbarHostState.showSnackbar(
-                            message = "Проверьте подключение к интернету",
-                            actionLabel = "Обновить",
-                            duration = SnackbarDuration.Indefinite
-                        )
-                        when (result) {
-                            SnackbarResult.ActionPerformed -> {
-                                refresh()
-                            }
-                            SnackbarResult.Dismissed -> {
-                                log.i { "Dismissed" }
-                            }
-                        }
-                    }
-                } else {
-                    CarCard(it, carsViewSetsVM)
-                }
-            }
-            /*item(span = { GridItemSpan(2) }) {
-            Column (
-                verticalArrangement = Arrangement.Center,
-            ) {
-                Text(
-                    modifier = Modifier
-                        .padding(start = 5.dp, end = 5.dp, top = 5.dp, bottom = 5.dp),
-                    textAlign = TextAlign.Center,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    fontFamily = FontFamily.SansSerif,
-                    text = "Рекомендуем",
-                )
-        Row(
-            horizontalArrangement = Arrangement.SpaceAround
-        ) {
-            Column {
-                for (i in uiState.images) {
-                    if (uiState.images.isEmpty()) {
-                        val scope = rememberCoroutineScope()
-                        val snackbarHostState = remember { SnackbarHostState() }
-                        scope.launch {
-                            snackbarHostState.showSnackbar("Проверьте подключение к интернету")
-                        }
-                    } else {
-                        CarCard(i, carsViewSetsVM)
                     }
                 }
             }
-            Column {
-                for (i in uiState.images) {
-                    if (uiState.images.isEmpty()) {
-                        val scope = rememberCoroutineScope()
-                        val snackbarHostState = remember { SnackbarHostState() }
-                        scope.launch {
-                            snackbarHostState.showSnackbar("Проверьте подключение к интернету")
+            item {
+                Column {
+                    for (i in partImagesState.images) {
+                        if (partInfoState.info.isEmpty() || partImagesState.images.isEmpty() ||
+                            carInfoState.info.isEmpty() || carImagesState.images.isEmpty()
+                        ) {
+                            val scope = rememberCoroutineScope()
+                            scope.launch {
+                                log.i {"carImage = " + carImagesState.images.size}
+                                log.i {"partImage = " + partImagesState.images.size}
+                                log.i {"carInfo = " + carInfoState.info.size}
+                                log.i {"partInfo = " + partInfoState.info.size}
+                                val result = snackbarHostState.showSnackbar(
+                                    message = "Проверьте подключение к интернету",
+                                    actionLabel = "Обновить",
+                                    duration = SnackbarDuration.Indefinite
+                                )
+                                when (result) {
+                                    SnackbarResult.ActionPerformed -> {
+                                        refresh()
+                                    }
+                                    SnackbarResult.Dismissed -> {
+                                        log.i { "Dismissed" }
+                                    }
+                                }
+                            }
+                        } else {
+                            MultiCard(
+                                carImagesState.images[0],
+                                carsViewSetsVM,
+                                partsViewSetsVM,
+                                i,
+                                true
+                            )
                         }
-                    } else {
-                        CarCard(i, carsViewSetsVM)
                     }
                 }
-            }*/
+            }
         }
         Box(
             modifier = Modifier
@@ -390,6 +343,19 @@ fun CarImageCell(image: CarImage) {
 }
 
 @Composable
+fun PartImageCell(image: PartImage) {
+    KamelImage(
+        asyncPainterResource(image.file),
+        image.fileName,
+        contentScale = ContentScale.Crop,
+        modifier = Modifier
+            .fillMaxWidth()
+            .aspectRatio(1.0f)
+            .padding(5.dp)
+    )
+}
+
+@Composable
 private fun RowScope.TabNavigationItem(tab: Tab) {
     val tabNavigator = LocalTabNavigator.current
 
@@ -473,13 +439,43 @@ fun TopBar() {
     }
 }
 
-@OptIn(ExperimentalResourceApi::class)
 @Composable
-fun CarCard(carImage: CarImage, carsViewSetsVM: CarViewSetViewModel) {
-    val viewSetsUIState by carsViewSetsVM.uiState.collectAsState()
-    val price = carsViewSetsVM.uiState.value.info.find { it.carId == carImage.carID }?.price
-    val model = carsViewSetsVM.uiState.value.info.find { it.carId == carImage.carID }?.brand + " " +
-            carsViewSetsVM.uiState.value.info.find { it.carId == carImage.carID }?.model
+fun MultiCard(
+    carImage: CarImage,
+    carsViewSetsVM: CarViewSetViewModel,
+    partsViewSetsVM: PartViewSetViewModel,
+    partImage: PartImage,
+    isPart: Boolean
+) {
+    val carViewSetsUIState by carsViewSetsVM.uiState.collectAsState()
+    val partViewSetsUIState by partsViewSetsVM.uiState.collectAsState()
+    val price: String
+    val nameTag: String
+    if (!isPart) {
+        if(carViewSetsUIState.info.isNotEmpty() && carImage.carID.isNotEmpty()) {
+            price =
+                carsViewSetsVM.uiState.value.info.find { it.carId == carImage.carID[0] }?.price.toString()
+            nameTag =
+                carsViewSetsVM.uiState.value.info.find { it.carId == carImage.carID[0] }?.brand + " " +
+                        carsViewSetsVM.uiState.value.info.find { it.carId == carImage.carID[0] }?.model
+        } else {
+            price = "0"
+            nameTag = "Pusto"
+            log.i {"Car huinya pustaya"}
+        }
+    } else {
+        if (partViewSetsUIState.info.isNotEmpty() && partImage.partID.isNotEmpty()) {
+            price =
+                partsViewSetsVM.uiState.value.info.find { it.partID == partImage.partID[0] }?.partPrice.toString()
+            nameTag =
+                partsViewSetsVM.uiState.value.info.find { it.partID == partImage.partID[0] }?.partName.toString()
+        } else {
+            price = "0"
+            nameTag = "Pusto"
+            log.i {"Part huinya pustaya"}
+        }
+    }
+
     Card(
         elevation = 10.dp,
         shape = RoundedCornerShape(10.dp),
@@ -488,7 +484,11 @@ fun CarCard(carImage: CarImage, carsViewSetsVM: CarViewSetViewModel) {
         backgroundColor = Color(0xFFE3E3E3),
     ) {
         Column {
-            CarImageCell(carImage)
+            if (!isPart) {
+                CarImageCell(carImage)
+            } else {
+                PartImageCell(partImage)
+            }
             Text(
                 modifier = Modifier
                     .padding(horizontal = 5.dp, vertical = 2.dp)
@@ -503,9 +503,9 @@ fun CarCard(carImage: CarImage, carsViewSetsVM: CarViewSetViewModel) {
                     .align(Alignment.CenterHorizontally),
                 textAlign = TextAlign.Center,
                 fontSize = 14.sp,
-                text = if (model != null) model else ""
+                text = if (nameTag != null) nameTag else ""
             )
         }
-
     }
 }
+

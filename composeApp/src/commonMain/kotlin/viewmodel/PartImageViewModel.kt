@@ -6,23 +6,22 @@ import io.ktor.client.call.body
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
 import io.ktor.serialization.kotlinx.json.json
-import io.ktor.util.logging.Logger
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import model.CarImage
+import model.PartImage
 import org.lighthousegames.logging.logging
-import kotlin.math.log
 
 @Serializable
-data class CarImageUiState(
-    val images: List<CarImage> = emptyList()
+data class PartImageUiState(
+    val images: List<PartImage> = emptyList()
 )
 
-class CarImageViewModel : ViewModel() {
-    private val _uiState = MutableStateFlow<CarImageUiState>(CarImageUiState())
+class PartImageViewModel : ViewModel() {
+    private val _uiState = MutableStateFlow<PartImageUiState>(PartImageUiState())
     val uiState = _uiState.asStateFlow()
 
     private val httpClient = HttpClient {
@@ -55,10 +54,10 @@ class CarImageViewModel : ViewModel() {
         val log = logging()
     }
 
-    private suspend fun getImages(): List<CarImage> {
+    private suspend fun getImages(): List<PartImage> {
         return try {
             httpClient
-                .get("https://little-ghosts-repair.loca.lt/api/storage/CarImageViewSet/")
+                .get("https://little-ghosts-repair.loca.lt/api/storage/PartImageViewSet/")
                 .body()
         } catch (e: Exception) {
             log.e {"error: ${e.message}"}

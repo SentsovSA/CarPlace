@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import model.CarViewSet
+import viewmodel.CarImageViewModel.Companion.log
 
 @Serializable
 data class CarViewSetUiState(
@@ -48,13 +49,13 @@ class CarViewSetViewModel : ViewModel() {
     fun refresh() = updateInfo()
 
     private suspend fun getInfo(): List<CarViewSet> {
-        try {
-            return httpClient
+        return try {
+            httpClient
                 .get("https://little-ghosts-repair.loca.lt/api/storage/CarViewSet/")
                 .body()
         } catch (e: Exception) {
-            return emptyList()
+            log.e {"error: ${e.message}"}
+            emptyList()
         }
-
     }
 }

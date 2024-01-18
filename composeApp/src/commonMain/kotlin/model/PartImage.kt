@@ -3,10 +3,10 @@ package model
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class CarImage(
-    val carID: List<Int>,
+data class PartImage(
     val file: String,
     val fileName: String,
     val imageID: Int,
-    val imageURL: String
+    val imageURL: String,
+    val partID: List<Int>
 )
