@@ -1,3 +1,5 @@
+import AutoPartHelper.selectedAuto
+import AutoPartHelper.selectedParts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.*
@@ -71,6 +73,11 @@ fun App() {
     }
 }
 
+object AutoPartHelper {
+    var selectedAuto = false
+    var selectedParts = false
+}
+
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun CarsPage(
@@ -90,11 +97,11 @@ fun CarsPage(
     val scaffoldState = rememberScaffoldState()
     fun refresh() = refreshScope.launch {
         refreshing = true
-        log.i {"refreshing..."}
-        val carIVM = CarImageViewModel()
-        val carVSVM = CarViewSetViewModel()
-        carIVM.refresh()
-        carVSVM.refresh()
+        log.i { "refreshing..." }
+        carImagesVM.refresh()
+        carsViewSetsVM.refresh()
+        partImagesVM.refresh()
+        partsViewSetsVM.refresh()
         delay(1000)
         refreshing = false
     }
@@ -127,7 +134,10 @@ fun CarsPage(
                 )
             }
             item(span = { GridItemSpan(2) }) {
-                AutoPartChoose()
+                AutoPartChoose(
+                    carImagesVM, carsViewSetsVM,
+                    partImagesVM, partsViewSetsVM
+                )
                 Spacer(
                     modifier = Modifier
                         .padding(bottom = 10.dp)
@@ -149,78 +159,127 @@ fun CarsPage(
             }
             item {
                 Column {
-                    for (i in carImagesState.images) {
-                        if (carInfoState.info.isEmpty() || carImagesState.images.isEmpty() ||
-                            partInfoState.info.isEmpty() || partImagesState.images.isEmpty()) {
-                            log.i {"smth empty"}
-                            val scope = rememberCoroutineScope()
-                            scope.launch {
-                                log.i {"carImage = " + carImagesState.images.size}
-                                log.i {"partImage = " + partImagesState.images.size}
-                                log.i {"carInfo = " + carInfoState.info.size}
-                                log.i {"partInfo = " + partInfoState.info.size}
-                                val result = snackbarHostState.showSnackbar(
-                                    message = "Проверьте подключение к интернету",
-                                    actionLabel = "Обновить",
-                                    duration = SnackbarDuration.Long
-                                )
-                                when (result) {
-                                    SnackbarResult.ActionPerformed -> {
-                                        log.i { "Action performed" }
-                                        refresh()
-                                    }
-                                    SnackbarResult.Dismissed -> {
-                                        log.i { "Dismissed" }
-                                    }
+                    if (carInfoState.info.isEmpty() || carImagesState.images.isEmpty() ||
+                        partInfoState.info.isEmpty() || partImagesState.images.isEmpty()
+                    ) {
+                        val scope = rememberCoroutineScope()
+                        scope.launch {
+                            val result = snackbarHostState.showSnackbar(
+                                message = "Проверьте подключение к интернету",
+                                actionLabel = "Обновить",
+                                duration = SnackbarDuration.Indefinite
+                            )
+                            when (result) {
+                                SnackbarResult.ActionPerformed -> {
+                                    log.i { "Action performed" }
+                                    refresh()
+                                }
+
+                                SnackbarResult.Dismissed -> {
+                                    log.i { "Dismissed" }
                                 }
                             }
-                        } else {
-                            MultiCard(
-                                i,
-                                carsViewSetsVM,
-                                partsViewSetsVM,
-                                partImagesState.images[0],
-                                false
-                            )
+                        }
+                    } else {
+                        if (!selectedAuto && !selectedParts) {
+                            log.i { "1st column if: selectedAuto = $selectedAuto, selectedParts = $selectedParts" }
+                            for (i in carImagesState.images) {
+                                MultiCard(
+                                    i,
+                                    carsViewSetsVM,
+                                    partsViewSetsVM,
+                                    partImagesState.images[0],
+                                    false
+                                )
+                            }
+                        } else if (selectedAuto && !selectedParts) {
+                            log.i { "1st column else if 1: selectedAuto = $selectedAuto, selectedParts = $selectedParts" }
+                            for (i in carImagesState.images.indices) {
+                                if(i % 2 == 0)
+                                MultiCard(
+                                    carImagesState.images[i],
+                                    carsViewSetsVM,
+                                    partsViewSetsVM,
+                                    partImagesState.images[0],
+                                    false
+                                )
+                            }
+                        } else if (!selectedAuto && selectedParts) {
+                            log.i { "1st column else if 2: selectedAuto = $selectedAuto, selectedParts = $selectedParts" }
+                            for (i in partImagesState.images.indices) {
+                                if(i % 2 == 0)
+                                MultiCard(
+                                    carImagesState.images[0],
+                                    carsViewSetsVM,
+                                    partsViewSetsVM,
+                                    partImagesState.images[i],
+                                    true
+                                )
+                            }
                         }
                     }
                 }
             }
             item {
                 Column {
-                    for (i in partImagesState.images) {
-                        if (partInfoState.info.isEmpty() || partImagesState.images.isEmpty() ||
-                            carInfoState.info.isEmpty() || carImagesState.images.isEmpty()
-                        ) {
-                            val scope = rememberCoroutineScope()
-                            scope.launch {
-                                log.i {"carImage = " + carImagesState.images.size}
-                                log.i {"partImage = " + partImagesState.images.size}
-                                log.i {"carInfo = " + carInfoState.info.size}
-                                log.i {"partInfo = " + partInfoState.info.size}
-                                val result = snackbarHostState.showSnackbar(
-                                    message = "Проверьте подключение к интернету",
-                                    actionLabel = "Обновить",
-                                    duration = SnackbarDuration.Indefinite
-                                )
-                                when (result) {
-                                    SnackbarResult.ActionPerformed -> {
-                                        refresh()
-                                    }
-                                    SnackbarResult.Dismissed -> {
-                                        log.i { "Dismissed" }
-                                    }
+                    if (partInfoState.info.isEmpty() || partImagesState.images.isEmpty() ||
+                        carInfoState.info.isEmpty() || carImagesState.images.isEmpty()
+                    ) {
+                        val scope = rememberCoroutineScope()
+                        scope.launch {
+                            val result = snackbarHostState.showSnackbar(
+                                message = "Проверьте подключение к интернету",
+                                actionLabel = "Обновить",
+                                duration = SnackbarDuration.Indefinite
+                            )
+                            when (result) {
+                                SnackbarResult.ActionPerformed -> {
+                                    refresh()
+                                }
+
+                                SnackbarResult.Dismissed -> {
+                                    log.i { "Dismissed" }
                                 }
                             }
-                        } else {
-                            MultiCard(
-                                carImagesState.images[0],
-                                carsViewSetsVM,
-                                partsViewSetsVM,
-                                i,
-                                true
-                            )
                         }
+                    } else {
+                        if (!selectedAuto && !selectedParts) {
+                            log.i { "2nd column if: selectedAuto = $selectedAuto, selectedParts = $selectedParts" }
+                            for (i in partImagesState.images) {
+                                MultiCard(
+                                    carImagesState.images[0],
+                                    carsViewSetsVM,
+                                    partsViewSetsVM,
+                                    i,
+                                    true
+                                )
+                            }
+                        } else if (selectedAuto && !selectedParts) {
+                            log.i { "2nd column else if 1: selectedAuto = $selectedAuto, selectedParts = $selectedParts" }
+                            for (i in carImagesState.images.indices) {
+                                if(i % 2 == 1)
+                                MultiCard(
+                                    carImagesState.images[i],
+                                    carsViewSetsVM,
+                                    partsViewSetsVM,
+                                    partImagesState.images[0],
+                                    false
+                                )
+                            }
+                        } else if (!selectedAuto && selectedParts) {
+                            log.i { "2nd column else if 2: selectedAuto = $selectedAuto, selectedParts = $selectedParts" }
+                            for (i in partImagesState.images.indices) {
+                                if(i % 2 == 1)
+                                MultiCard(
+                                    carImagesState.images[0],
+                                    carsViewSetsVM,
+                                    partsViewSetsVM,
+                                    partImagesState.images[i],
+                                    true
+                                )
+                            }
+                        }
+
                     }
                 }
             }
@@ -244,9 +303,10 @@ fun CarsPage(
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun AutoPartChoose() {
-    var selectedAuto by remember { mutableStateOf(false) }
-    var selectedParts by remember { mutableStateOf(false) }
+fun AutoPartChoose(
+    carImagesVM: CarImageViewModel, carsViewSetsVM: CarViewSetViewModel,
+    partImagesVM: PartImageViewModel, partsViewSetsVM: PartViewSetViewModel
+) {
     Row(
         modifier = Modifier
             .padding(start = 5.dp, end = 5.dp, top = 15.dp, bottom = 15.dp)
@@ -257,6 +317,11 @@ fun AutoPartChoose() {
             onClick = {
                 selectedAuto = !selectedAuto
                 selectedParts = false
+                log.i { "refreshing chip auto $selectedAuto" }
+                carImagesVM.refresh()
+                carsViewSetsVM.refresh()
+                partImagesVM.refresh()
+                partsViewSetsVM.refresh()
             },
             shape = RoundedCornerShape(10.dp),
             modifier = Modifier
@@ -278,6 +343,11 @@ fun AutoPartChoose() {
             onClick = {
                 selectedParts = !selectedParts
                 selectedAuto = false
+                log.i { "refreshing chip parts $selectedParts" }
+                carImagesVM.refresh()
+                carsViewSetsVM.refresh()
+                partImagesVM.refresh()
+                partsViewSetsVM.refresh()
             },
             shape = RoundedCornerShape(10.dp),
             modifier = Modifier
@@ -452,7 +522,7 @@ fun MultiCard(
     val price: String
     val nameTag: String
     if (!isPart) {
-        if(carViewSetsUIState.info.isNotEmpty() && carImage.carID.isNotEmpty()) {
+        if (carViewSetsUIState.info.isNotEmpty() && carImage.carID.isNotEmpty()) {
             price =
                 carsViewSetsVM.uiState.value.info.find { it.carId == carImage.carID[0] }?.price.toString()
             nameTag =
@@ -461,7 +531,7 @@ fun MultiCard(
         } else {
             price = "0"
             nameTag = "Pusto"
-            log.i {"Car huinya pustaya"}
+            log.i { "Car huinya pustaya" }
         }
     } else {
         if (partViewSetsUIState.info.isNotEmpty() && partImage.partID.isNotEmpty()) {
@@ -472,7 +542,7 @@ fun MultiCard(
         } else {
             price = "0"
             nameTag = "Pusto"
-            log.i {"Part huinya pustaya"}
+            log.i { "Part huinya pustaya" }
         }
     }
 
