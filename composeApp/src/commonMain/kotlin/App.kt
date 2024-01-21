@@ -12,6 +12,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
@@ -196,25 +197,25 @@ fun CarsPage(
                             log.i { "1st column else if 1: selectedAuto = $selectedAuto, selectedParts = $selectedParts" }
                             for (i in carImagesState.images.indices) {
                                 if(i % 2 == 0)
-                                MultiCard(
-                                    carImagesState.images[i],
-                                    carsViewSetsVM,
-                                    partsViewSetsVM,
-                                    partImagesState.images[0],
-                                    false
-                                )
+                                    MultiCard(
+                                        carImagesState.images[i],
+                                        carsViewSetsVM,
+                                        partsViewSetsVM,
+                                        partImagesState.images[0],
+                                        false
+                                    )
                             }
                         } else if (!selectedAuto && selectedParts) {
                             log.i { "1st column else if 2: selectedAuto = $selectedAuto, selectedParts = $selectedParts" }
                             for (i in partImagesState.images.indices) {
                                 if(i % 2 == 0)
-                                MultiCard(
-                                    carImagesState.images[0],
-                                    carsViewSetsVM,
-                                    partsViewSetsVM,
-                                    partImagesState.images[i],
-                                    true
-                                )
+                                    MultiCard(
+                                        carImagesState.images[0],
+                                        carsViewSetsVM,
+                                        partsViewSetsVM,
+                                        partImagesState.images[i],
+                                        true
+                                    )
                             }
                         }
                     }
@@ -317,11 +318,6 @@ fun AutoPartChoose(
             onClick = {
                 selectedAuto = !selectedAuto
                 selectedParts = false
-                log.i { "refreshing chip auto $selectedAuto" }
-                carImagesVM.refresh()
-                carsViewSetsVM.refresh()
-                partImagesVM.refresh()
-                partsViewSetsVM.refresh()
             },
             shape = RoundedCornerShape(10.dp),
             modifier = Modifier
@@ -343,11 +339,6 @@ fun AutoPartChoose(
             onClick = {
                 selectedParts = !selectedParts
                 selectedAuto = false
-                log.i { "refreshing chip parts $selectedParts" }
-                carImagesVM.refresh()
-                carsViewSetsVM.refresh()
-                partImagesVM.refresh()
-                partsViewSetsVM.refresh()
             },
             shape = RoundedCornerShape(10.dp),
             modifier = Modifier
