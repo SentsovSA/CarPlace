@@ -10,5 +10,6 @@ data class PartViewSet(
     val partName: String,
     val partPrice: Int,
     val sellerID: List<Int>,
-    val stock: Int
+    val stock: Int,
+    val partImageID: List<Int>
 )

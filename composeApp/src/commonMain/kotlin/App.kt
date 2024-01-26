@@ -1,4 +1,5 @@
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.BottomNavigation
@@ -7,6 +8,7 @@ import androidx.compose.material.DrawerValue
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Icon
 import androidx.compose.material.Scaffold
+import androidx.compose.material.Slider
 import androidx.compose.material.rememberDrawerState
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.Composable
@@ -22,6 +24,7 @@ import cafe.adriel.voyager.navigator.tab.CurrentTab
 import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
 import cafe.adriel.voyager.navigator.tab.Tab
 import cafe.adriel.voyager.navigator.tab.TabNavigator
+import cafe.adriel.voyager.transitions.SlideTransition
 import views.AddNewTab
 import views.HomeTab
 import views.LikedTab
@@ -30,23 +33,24 @@ import views.ProfileTabAfterLogin
 import views.ProfileTabBeforeLogin
 
 lateinit var loggedIn: MutableState<Boolean>
+lateinit var userID: MutableState<Int>
 lateinit var email: MutableState<String>
+lateinit var login: MutableState<String>
+lateinit var phone: MutableState<String>
 
-@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun App() {
     val scaffoldState = rememberScaffoldState(rememberDrawerState(DrawerValue.Closed))
-    loggedIn = rememberSaveable{ mutableStateOf(false) }
-    email = rememberSaveable{ mutableStateOf("") }
+    loggedIn = rememberSaveable { mutableStateOf(false) }
+    userID = rememberSaveable{ mutableStateOf(-1) }
+    email = rememberSaveable { mutableStateOf("") }
+    login = rememberSaveable { mutableStateOf("") }
+    phone = rememberSaveable { mutableStateOf("") }
     TabNavigator(HomeTab) {
         Scaffold(
             scaffoldState = scaffoldState,
             content = { padding ->
-                BottomSheetNavigator(
-                    modifier = Modifier.padding(padding),
-                    hideOnBackPress = true,
-                    sheetBackgroundColor = Color.Transparent
-                ) {
+                Box(Modifier.padding(padding)) {
                     CurrentTab()
                 }
             },

@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.ExperimentalMaterialApi
@@ -31,47 +32,94 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.bottomSheet.LocalBottomSheetNavigator
+import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import cafe.adriel.voyager.navigator.tab.Tab
 import cafe.adriel.voyager.navigator.tab.TabOptions
 import dev.icerock.moko.mvvm.compose.getViewModel
 import dev.icerock.moko.mvvm.compose.viewModelFactory
-import email
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import loggedIn
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
-import userID
 import viewmodel.CarImageViewModel
 import viewmodel.UserViewModel
+import email
+import io.ktor.client.HttpClient
+import io.ktor.client.call.body
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
+import io.ktor.serialization.kotlinx.json.json
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
+import login
+import masks.MaskVisualTransformation
+import phone
+import userID
 
-object ProfileTabAfterLogin : Tab, Screen {
-    @OptIn(ExperimentalMaterialApi::class)
+object Registration : Tab, Screen {
+    private lateinit var response: Response
+
+    private val httpClient = HttpClient {
+        install(ContentNegotiation) {
+            json()
+        }
+    }
+
+    private suspend fun sendInfo(email: String, login: String, phone:String, navigator: Navigator) {
+        try {
+            response =
+                httpClient.post("https://little-ghosts-repair.loca.lt/login/") {
+                    contentType(ContentType.Application.Json)
+                    setBody(buildJsonObject {
+                        put("method", "confirm")
+                        put("email", email)
+                        put("name", login)
+                        put("phone", phone)
+                    })
+                }.body<Response>()
+            userID.value = response.response
+            navigator.push(ProfileTabAfterLogin)
+            CarImageViewModel.log.i { response }
+        } catch (e: Exception) {
+            CarImageViewModel.log.i { "Регистрация неудачна" }
+            CarImageViewModel.log.e { "error: ${e.message}" }
+        }
+    }
+
+    @Serializable
+    data class Response(
+        var response: Int
+    )
     @Composable
+    @OptIn(ExperimentalMaterialApi::class)
     override fun Content() {
         MaterialTheme(
             colors = MaterialTheme.colors.copy(background = Color(0xFFE3E3E3))
         ) {
             val refreshScope = rememberCoroutineScope()
+            val sendScope = rememberCoroutineScope()
             var refreshing by remember { mutableStateOf(false) }
             val navigator = LocalNavigator.currentOrThrow
             var email by remember { mutableStateOf(email) }
-            var login by remember { mutableStateOf("") }
-            var phone by remember { mutableStateOf("") }
+            var login by remember { mutableStateOf(login) }
+            var phone by remember { mutableStateOf(phone) }
             fun refresh() = refreshScope.launch {
                 refreshing = true
                 CarImageViewModel.log.i { "refreshing..." }
                 delay(1000)
                 refreshing = false
             }
-
             val state = rememberPullRefreshState(refreshing, ::refresh)
             Column(
                 modifier = Modifier
@@ -92,7 +140,7 @@ object ProfileTabAfterLogin : Tab, Screen {
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "Ваш email: " + userState.info.find { it.userEmail == email.value }?.userEmail.toString(),
+                        text = "Ваш email: ${email.value}",
                         textAlign = TextAlign.Center,
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Normal,
@@ -101,7 +149,7 @@ object ProfileTabAfterLogin : Tab, Screen {
                             .padding(10.dp)
                     )
                     Text(
-                        text = "Ваш логин: " + userState.info.find { it.userEmail == email.value }?.userName.toString(),
+                        text = "Ваш логин: ",
                         textAlign = TextAlign.Center,
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Normal,
@@ -109,21 +157,65 @@ object ProfileTabAfterLogin : Tab, Screen {
                             .fillMaxWidth()
                             .padding(10.dp)
                     )
+                    TextField(
+                        value = login.value,
+                        onValueChange = { login.value = it },
+                        readOnly = false,
+                        textStyle = TextStyle.Default.copy(fontSize = 15.sp),
+                        placeholder = { Text(text = "Логин") },
+                        modifier = Modifier
+                            .padding(horizontal = 5.dp)
+                            .align(Alignment.CenterHorizontally),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = TextFieldDefaults.textFieldColors(
+                            backgroundColor = Color.White,
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent,
+                            disabledIndicatorColor = Color.Transparent
+                        ),
+                        singleLine = true,
+                        maxLines = 1
+                    )
                     Text(
-                        text = "Ваш номер телефона: " + userState.info.find { it.userEmail == email.value }?.userPhone.toString(),
+                        text = "Ваш номер телефона: ",
                         textAlign = TextAlign.Center,
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Normal,
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(10.dp)
+                    )
+                    TextField(
+                        value = phone.value,
+                        onValueChange = { it ->
+                            if (it.length <= NumberDefaults.INPUT_LENGTH) {
+                                phone.value = it.filter { it.isDigit() }
+                            }
+                        },
+                        readOnly = false,
+                        textStyle = TextStyle.Default.copy(fontSize = 15.sp),
+                        placeholder = { Text(text = "Номер телефона") },
+                        modifier = Modifier
+                            .padding(horizontal = 5.dp)
+                            .align(Alignment.CenterHorizontally),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = TextFieldDefaults.textFieldColors(
+                            backgroundColor = Color.White,
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent,
+                            disabledIndicatorColor = Color.Transparent
+                        ),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        visualTransformation = MaskVisualTransformation(NumberDefaults.MASK),
+                        singleLine = true,
+                        maxLines = 1
                     )
                     Spacer(Modifier.padding(80.dp))
                     Button(
                         onClick = {
-                            loggedIn.value = false
-                            email.value = ""
-                            navigator.push(ProfileTabBeforeLogin)
+                            sendScope.launch {
+                                sendInfo(email.value, login.value, phone.value, navigator)
+                            }
                         },
                         modifier = Modifier
                             .align(Alignment.CenterHorizontally),
@@ -131,7 +223,7 @@ object ProfileTabAfterLogin : Tab, Screen {
                         colors = ButtonDefaults.buttonColors(Color(0xFFC5C5C5))
                     ) {
                         Text(
-                            text = "Выйти",
+                            text = "Сохранить",
                             textAlign = TextAlign.Center,
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Normal,
@@ -154,6 +246,11 @@ object ProfileTabAfterLogin : Tab, Screen {
                 )
             }
         }
+    }
+
+    object NumberDefaults {
+        const val MASK = "+7(###)###-##-##"
+        const val INPUT_LENGTH = 10
     }
 
     @OptIn(ExperimentalResourceApi::class)

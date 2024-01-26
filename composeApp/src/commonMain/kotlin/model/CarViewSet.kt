@@ -13,5 +13,6 @@ data class CarViewSet(
     val sellerID: List<Int>,
     val stock: Int,
     val vin: String,
-    val year: String
+    val year: String,
+    val imageID: List<Int>
 )

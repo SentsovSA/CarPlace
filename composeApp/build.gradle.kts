@@ -48,6 +48,7 @@ kotlin {
             implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
             implementation("cafe.adriel.voyager:voyager-tab-navigator:1.0.0")
             implementation("cafe.adriel.voyager:voyager-bottom-sheet-navigator:1.0.0")
+            implementation("cafe.adriel.voyager:voyager-transitions:1.0.0")
             api("dev.icerock.moko:mvvm-core:0.16.1") // only ViewModel, EventsDispatcher, Dispatchers.UI
             api("dev.icerock.moko:mvvm-compose:0.16.1")
             api("org.lighthousegames:logging:1.3.0")

@@ -1,6 +1,8 @@
 package views
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,11 +15,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Card
 import androidx.compose.material.ChipDefaults
+import androidx.compose.material.DrawerValue
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.FilterChip
 import androidx.compose.material.Icon
@@ -54,6 +59,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
+import cafe.adriel.voyager.navigator.bottomSheet.BottomSheetNavigator
 import cafe.adriel.voyager.navigator.bottomSheet.LocalBottomSheetNavigator
 import cafe.adriel.voyager.navigator.tab.Tab
 import cafe.adriel.voyager.navigator.tab.TabOptions
@@ -63,11 +69,10 @@ import io.kamel.image.KamelImage
 import io.kamel.image.asyncPainterResource
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import model.CarImage
-import model.PartImage
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 import viewmodel.CarImageViewModel
+import viewmodel.CarImageViewModel.Companion.log
 import viewmodel.CarViewSetViewModel
 import viewmodel.PartImageViewModel
 import viewmodel.PartViewSetViewModel
@@ -75,16 +80,37 @@ import views.HomeTab.AutoPartHelper.selectedAuto
 import views.HomeTab.AutoPartHelper.selectedParts
 
 object HomeTab : Tab, Screen {
+    @OptIn(ExperimentalMaterialApi::class)
     @Composable
     override fun Content() {
+        val scaffoldState = rememberScaffoldState(rememberDrawerState(DrawerValue.Closed))
         MaterialTheme(
             colors = MaterialTheme.colors.copy(background = Color(0xFFE3E3E3)),
         ) {
-            val carsImagesVM = getViewModel(Unit, viewModelFactory { CarImageViewModel() })
-            val carsViewSetsVM = getViewModel(Unit, viewModelFactory { CarViewSetViewModel() })
-            val partsViewSetsVM = getViewModel(Unit, viewModelFactory { PartViewSetViewModel() })
-            val partImagesVM = getViewModel(Unit, viewModelFactory { PartImageViewModel() })
-            CarsPage(carsImagesVM, carsViewSetsVM, partsViewSetsVM, partImagesVM)
+            Scaffold(scaffoldState = scaffoldState,
+                content = { padding ->
+                    BottomSheetNavigator(
+                        modifier = Modifier.padding(padding),
+                        hideOnBackPress = true,
+                        sheetBackgroundColor = Color.Transparent
+                    ) {
+                        val carsImagesVM =
+                            getViewModel(Unit, viewModelFactory { CarImageViewModel() })
+                        val carsViewSetsVM =
+                            getViewModel(Unit, viewModelFactory { CarViewSetViewModel() })
+                        val partsViewSetsVM =
+                            getViewModel(Unit, viewModelFactory { PartViewSetViewModel() })
+                        val partImagesVM =
+                            getViewModel(Unit, viewModelFactory { PartImageViewModel() })
+                        CarsPage(
+                            carsImagesVM,
+                            carsViewSetsVM,
+                            partsViewSetsVM,
+                            partImagesVM
+                        )
+                    }
+                }
+            )
         }
     }
 
@@ -100,7 +126,6 @@ object HomeTab : Tab, Screen {
         carsViewSetsVM: CarViewSetViewModel,
         partsViewSetsVM: PartViewSetViewModel,
         partImagesVM: PartImageViewModel
-
     ) {
         val carImagesState by carImagesVM.uiState.collectAsState()
         val carInfoState by carsViewSetsVM.uiState.collectAsState()
@@ -109,10 +134,10 @@ object HomeTab : Tab, Screen {
         val refreshScope = rememberCoroutineScope()
         var refreshing by remember { mutableStateOf(false) }
         val snackbarHostState = remember { SnackbarHostState() }
-        val scaffoldState = rememberScaffoldState()
+        val bottomSheetNavigator = LocalBottomSheetNavigator.current
         fun refresh() = refreshScope.launch {
             refreshing = true
-            CarImageViewModel.log.i { "refreshing..." }
+            log.i { "refreshing..." }
             carImagesVM.refresh()
             carsViewSetsVM.refresh()
             partImagesVM.refresh()
@@ -140,7 +165,7 @@ object HomeTab : Tab, Screen {
                     .padding(start = 5.dp, end = 5.dp, top = 10.dp, bottom = 5.dp)
             ) {
                 item(span = { GridItemSpan(2) }) {
-                    TopBar()
+                    TopBar(bottomSheetNavigator)
                 }
                 item(span = { GridItemSpan(2) }) {
                     Spacer(
@@ -149,10 +174,7 @@ object HomeTab : Tab, Screen {
                     )
                 }
                 item(span = { GridItemSpan(2) }) {
-                    AutoPartChoose(
-                        carImagesVM, carsViewSetsVM,
-                        partImagesVM, partsViewSetsVM
-                    )
+                    AutoPartChoose()
                     Spacer(
                         modifier = Modifier
                             .padding(bottom = 10.dp)
@@ -186,49 +208,58 @@ object HomeTab : Tab, Screen {
                                 )
                                 when (result) {
                                     SnackbarResult.ActionPerformed -> {
-                                        CarImageViewModel.log.i { "Action performed" }
+                                        log.i { "Action performed" }
                                         refresh()
                                     }
 
                                     SnackbarResult.Dismissed -> {
-                                        CarImageViewModel.log.i { "Dismissed" }
+                                        log.i { "Dismissed" }
                                     }
                                 }
                             }
                         } else {
                             if (!selectedAuto && !selectedParts) {
-                                CarImageViewModel.log.i { "1st column if: selectedAuto = $selectedAuto, selectedParts = $selectedParts" }
-                                for (i in carImagesState.images) {
+                                log.i { "1st column if: selectedAuto = $selectedAuto, selectedParts = $selectedParts" }
+                                for (i in carInfoState.info) {
                                     MultiCard(
-                                        i,
+                                        i.imageID,
                                         carsViewSetsVM,
                                         partsViewSetsVM,
-                                        partImagesState.images[0],
-                                        false
+                                        carImagesVM,
+                                        partImagesVM,
+                                        listOf(0),
+                                        false,
+                                        bottomSheetNavigator
                                     )
                                 }
                             } else if (selectedAuto && !selectedParts) {
-                                CarImageViewModel.log.i { "1st column else if 1: selectedAuto = $selectedAuto, selectedParts = $selectedParts" }
-                                for (i in carImagesState.images.indices) {
-                                    if(i % 2 == 0)
+                                log.i { "1st column else if 1: selectedAuto = $selectedAuto, selectedParts = $selectedParts" }
+                                for (i in carInfoState.info.indices) {
+                                    if (i % 2 == 0)
                                         MultiCard(
-                                            carImagesState.images[i],
+                                            carInfoState.info[i].imageID,
                                             carsViewSetsVM,
                                             partsViewSetsVM,
-                                            partImagesState.images[0],
-                                            false
+                                            carImagesVM,
+                                            partImagesVM,
+                                            listOf(0),
+                                            false,
+                                            bottomSheetNavigator
                                         )
                                 }
                             } else if (!selectedAuto && selectedParts) {
-                                CarImageViewModel.log.i { "1st column else if 2: selectedAuto = $selectedAuto, selectedParts = $selectedParts" }
-                                for (i in partImagesState.images.indices) {
-                                    if(i % 2 == 0)
+                                log.i { "1st column else if 2: selectedAuto = $selectedAuto, selectedParts = $selectedParts" }
+                                for (i in partInfoState.info.indices) {
+                                    if (i % 2 == 0)
                                         MultiCard(
-                                            carImagesState.images[0],
+                                            listOf(0),
                                             carsViewSetsVM,
                                             partsViewSetsVM,
-                                            partImagesState.images[i],
-                                            true
+                                            carImagesVM,
+                                            partImagesVM,
+                                            partInfoState.info[i].partImageID,
+                                            true,
+                                            bottomSheetNavigator
                                         )
                                 }
                             }
@@ -253,44 +284,53 @@ object HomeTab : Tab, Screen {
                                     }
 
                                     SnackbarResult.Dismissed -> {
-                                        CarImageViewModel.log.i { "Dismissed" }
+                                        log.i { "Dismissed" }
                                     }
                                 }
                             }
                         } else {
                             if (!selectedAuto && !selectedParts) {
-                                CarImageViewModel.log.i { "2nd column if: selectedAuto = $selectedAuto, selectedParts = $selectedParts" }
-                                for (i in partImagesState.images) {
+                                log.i { "2nd column if: selectedAuto = $selectedAuto, selectedParts = $selectedParts" }
+                                for (i in partInfoState.info) {
                                     MultiCard(
-                                        carImagesState.images[0],
+                                        listOf(0),
                                         carsViewSetsVM,
                                         partsViewSetsVM,
-                                        i,
-                                        true
+                                        carImagesVM,
+                                        partImagesVM,
+                                        i.partImageID,
+                                        true,
+                                        bottomSheetNavigator
                                     )
                                 }
                             } else if (selectedAuto && !selectedParts) {
-                                CarImageViewModel.log.i { "2nd column else if 1: selectedAuto = $selectedAuto, selectedParts = $selectedParts" }
-                                for (i in carImagesState.images.indices) {
-                                    if(i % 2 == 1)
+                                log.i { "2nd column else if 1: selectedAuto = $selectedAuto, selectedParts = $selectedParts" }
+                                for (i in carInfoState.info.indices) {
+                                    if (i % 2 == 1)
                                         MultiCard(
-                                            carImagesState.images[i],
+                                            carInfoState.info[i].imageID,
                                             carsViewSetsVM,
                                             partsViewSetsVM,
-                                            partImagesState.images[0],
-                                            false
+                                            carImagesVM,
+                                            partImagesVM,
+                                            listOf(0),
+                                            false,
+                                            bottomSheetNavigator
                                         )
                                 }
                             } else if (!selectedAuto && selectedParts) {
-                                CarImageViewModel.log.i { "2nd column else if 2: selectedAuto = $selectedAuto, selectedParts = $selectedParts" }
-                                for (i in partImagesState.images.indices) {
-                                    if(i % 2 == 1)
+                                log.i { "2nd column else if 2: selectedAuto = $selectedAuto, selectedParts = $selectedParts" }
+                                for (i in partInfoState.info.indices) {
+                                    if (i % 2 == 1)
                                         MultiCard(
-                                            carImagesState.images[0],
+                                            listOf(0),
                                             carsViewSetsVM,
                                             partsViewSetsVM,
-                                            partImagesState.images[i],
-                                            true
+                                            carImagesVM,
+                                            partImagesVM,
+                                            partInfoState.info[i].partImageID,
+                                            true,
+                                            bottomSheetNavigator
                                         )
                                 }
                             }
@@ -319,8 +359,6 @@ object HomeTab : Tab, Screen {
     @OptIn(ExperimentalMaterialApi::class)
     @Composable
     fun AutoPartChoose(
-        carImagesVM: CarImageViewModel, carsViewSetsVM: CarViewSetViewModel,
-        partImagesVM: PartImageViewModel, partsViewSetsVM: PartViewSetViewModel
     ) {
         Row(
             modifier = Modifier
@@ -405,36 +443,48 @@ object HomeTab : Tab, Screen {
     }
 
     @Composable
-    fun CarImageCell(image: CarImage) {
-        KamelImage(
-            asyncPainterResource(image.file),
-            image.fileName,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(1.0f)
-                .padding(5.dp)
-        )
+    fun CarImageCell(imageID: Int, carImagesVM: CarImageViewModel) {
+        carImagesVM.uiState.value.images.find {it.imageID == imageID}?.file?.let {
+            asyncPainterResource(
+                it
+            )
+        }?.let {
+            KamelImage(
+                it,
+                "test",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(1.0f)
+                    .padding(5.dp)
+            )
+        }
     }
 
     @Composable
-    fun PartImageCell(image: PartImage) {
-        KamelImage(
-            asyncPainterResource(image.file),
-            image.fileName,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(1.0f)
-                .padding(5.dp)
-        )
+    fun PartImageCell(partImageID: Int, partImagesVM: PartImageViewModel) {
+        partImagesVM.uiState.value.images.find {it.imageID == partImageID}?.file?.let {
+            asyncPainterResource(
+                it
+            )
+        }?.let {
+            KamelImage(
+                it,
+                "test",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(1.0f)
+                    .padding(5.dp)
+            )
+        }
     }
 
     @OptIn(ExperimentalResourceApi::class)
     @Composable
-    fun TopBar() {
+    fun TopBar(bottomSheetNavigator: BottomSheetNavigator) {
         var text by remember { mutableStateOf("") }
-        val bottomSheetNavigator = LocalBottomSheetNavigator.current
+
         Row(
             modifier = Modifier
                 .background(Color(0xFFFFFFFF), shape = RoundedCornerShape(10.dp))
@@ -490,40 +540,56 @@ object HomeTab : Tab, Screen {
         }
     }
 
+    @OptIn(ExperimentalFoundationApi::class)
     @Composable
     fun MultiCard(
-        carImage: CarImage,
+        imageIDs: List<Int>,
         carsViewSetsVM: CarViewSetViewModel,
         partsViewSetsVM: PartViewSetViewModel,
-        partImage: PartImage,
-        isPart: Boolean
+        carImagesVM: CarImageViewModel,
+        partImagesVM: PartImageViewModel,
+        partImageIDs: List<Int>,
+        isPart: Boolean,
+        bottomSheetNavigator: BottomSheetNavigator
     ) {
         val carViewSetsUIState by carsViewSetsVM.uiState.collectAsState()
         val partViewSetsUIState by partsViewSetsVM.uiState.collectAsState()
+        val carPagerState = rememberPagerState(
+            initialPage = 0,
+            initialPageOffsetFraction = 0f
+        ) {
+            imageIDs.size
+        }
+        val partPagerState = rememberPagerState(
+            initialPage = 0,
+            initialPageOffsetFraction = 0f
+        ) {
+            partImageIDs.size
+        }
         val price: String
         val nameTag: String
         if (!isPart) {
-            if (carViewSetsUIState.info.isNotEmpty() && carImage.carID.isNotEmpty()) {
+            log.i{ "imageIDs $imageIDs" }
+            if (carViewSetsUIState.info.isNotEmpty() && imageIDs.isNotEmpty()) {
                 price =
-                    carsViewSetsVM.uiState.value.info.find { it.carId == carImage.carID[0] }?.price.toString()
+                    carsViewSetsVM.uiState.value.info.find { it.imageID == imageIDs }?.price.toString()
                 nameTag =
-                    carsViewSetsVM.uiState.value.info.find { it.carId == carImage.carID[0] }?.brand + " " +
-                            carsViewSetsVM.uiState.value.info.find { it.carId == carImage.carID[0] }?.model
+                    carsViewSetsVM.uiState.value.info.find { it.imageID == imageIDs }?.brand + " " +
+                            carsViewSetsVM.uiState.value.info.find { it.imageID == imageIDs }?.model
             } else {
                 price = "0"
                 nameTag = "Pusto"
-                CarImageViewModel.log.i { "Car huinya pustaya" }
             }
         } else {
-            if (partViewSetsUIState.info.isNotEmpty() && partImage.partID.isNotEmpty()) {
+            log.i{ "partimageIDs $partImageIDs" }
+            if (partViewSetsUIState.info.isNotEmpty() && partImageIDs.isNotEmpty()) {
                 price =
-                    partsViewSetsVM.uiState.value.info.find { it.partID == partImage.partID[0] }?.partPrice.toString()
+                    partsViewSetsVM.uiState.value.info.find { it.partImageID == partImageIDs }?.partPrice.toString()
                 nameTag =
-                    partsViewSetsVM.uiState.value.info.find { it.partID == partImage.partID[0] }?.partName.toString()
+                    partsViewSetsVM.uiState.value.info.find { it.partImageID == partImageIDs }?.partName.toString()
             } else {
                 price = "0"
                 nameTag = "Pusto"
-                CarImageViewModel.log.i { "Part huinya pustaya" }
             }
         }
 
@@ -531,14 +597,35 @@ object HomeTab : Tab, Screen {
             elevation = 10.dp,
             shape = RoundedCornerShape(10.dp),
             modifier = Modifier
-                .padding(7.dp),
+                .padding(7.dp)
+                .clickable {
+                    bottomSheetNavigator.show(Details(imageIDs, partImageIDs, isPart))
+                },
             backgroundColor = Color(0xFFE3E3E3),
         ) {
             Column {
                 if (!isPart) {
-                    CarImageCell(carImage)
+                    HorizontalPager(
+                        state = carPagerState,
+                        modifier = Modifier
+                            .background(
+                                color = Color.Transparent,
+                                shape = RoundedCornerShape(10.dp)
+                            )
+                    ) { index ->
+                        CarImageCell(imageIDs[index], carImagesVM)
+                    }
                 } else {
-                    PartImageCell(partImage)
+                    HorizontalPager(
+                        state = partPagerState,
+                        modifier = Modifier
+                            .background(
+                                color = Color.Transparent,
+                                shape = RoundedCornerShape(10.dp)
+                            )
+                    ) { index ->
+                        PartImageCell(partImageIDs[index], partImagesVM)
+                    }
                 }
                 Text(
                     modifier = Modifier
@@ -546,7 +633,7 @@ object HomeTab : Tab, Screen {
                         .align(Alignment.CenterHorizontally),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.W800,
-                    text = if (price != null) "$price ₽" else ""
+                    text = "$price ₽"
                 )
                 Text(
                     modifier = Modifier
@@ -554,7 +641,7 @@ object HomeTab : Tab, Screen {
                         .align(Alignment.CenterHorizontally),
                     textAlign = TextAlign.Center,
                     fontSize = 14.sp,
-                    text = if (nameTag != null) nameTag else ""
+                    text = nameTag
                 )
             }
         }

@@ -13,6 +13,7 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import model.PartViewSet
 import model.User
+import viewmodel.CarImageViewModel.Companion.log
 
 @Serializable
 data class UserUiState(
