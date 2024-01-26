@@ -14,8 +14,6 @@ import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
-import androidx.compose.material.TextField
-import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
@@ -29,14 +27,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.bottomSheet.LocalBottomSheetNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import cafe.adriel.voyager.navigator.tab.Tab
 import cafe.adriel.voyager.navigator.tab.TabOptions
@@ -48,7 +44,6 @@ import kotlinx.coroutines.launch
 import loggedIn
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
-import userID
 import viewmodel.CarImageViewModel
 import viewmodel.UserViewModel
 
@@ -62,9 +57,7 @@ object ProfileTabAfterLogin : Tab, Screen {
             val refreshScope = rememberCoroutineScope()
             var refreshing by remember { mutableStateOf(false) }
             val navigator = LocalNavigator.currentOrThrow
-            var email by remember { mutableStateOf(email) }
-            var login by remember { mutableStateOf("") }
-            var phone by remember { mutableStateOf("") }
+            val email by remember { mutableStateOf(email) }
             fun refresh() = refreshScope.launch {
                 refreshing = true
                 CarImageViewModel.log.i { "refreshing..." }

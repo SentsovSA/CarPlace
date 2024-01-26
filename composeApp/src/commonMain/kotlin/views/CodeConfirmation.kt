@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Button
@@ -40,19 +39,18 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.bottomSheet.BottomSheetNavigator
-import cafe.adriel.voyager.navigator.bottomSheet.LocalBottomSheetNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import cafe.adriel.voyager.navigator.tab.Tab
 import cafe.adriel.voyager.navigator.tab.TabOptions
 import dev.icerock.moko.mvvm.compose.getViewModel
 import dev.icerock.moko.mvvm.compose.viewModelFactory
+import email
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import loggedIn
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 import userID
-import email
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import viewmodel.UserViewModel
 
 class CodeConfirmation(private var code: String) : Screen, Tab {
@@ -64,7 +62,6 @@ class CodeConfirmation(private var code: String) : Screen, Tab {
         ) {
             val scaffoldState = rememberScaffoldState(rememberDrawerState(DrawerValue.Closed))
             val navigator = LocalNavigator.currentOrThrow
-            val coroutineScope = rememberCoroutineScope()
             Scaffold(
                 scaffoldState = scaffoldState,
                 backgroundColor = Color(0xFFE3E3E3),

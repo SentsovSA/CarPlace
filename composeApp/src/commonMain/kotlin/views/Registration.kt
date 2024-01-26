@@ -21,7 +21,6 @@ import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -42,14 +41,6 @@ import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import cafe.adriel.voyager.navigator.tab.Tab
 import cafe.adriel.voyager.navigator.tab.TabOptions
-import dev.icerock.moko.mvvm.compose.getViewModel
-import dev.icerock.moko.mvvm.compose.viewModelFactory
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import org.jetbrains.compose.resources.ExperimentalResourceApi
-import org.jetbrains.compose.resources.painterResource
-import viewmodel.CarImageViewModel
-import viewmodel.UserViewModel
 import email
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -59,13 +50,18 @@ import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import login
 import masks.MaskVisualTransformation
+import org.jetbrains.compose.resources.ExperimentalResourceApi
+import org.jetbrains.compose.resources.painterResource
 import phone
 import userID
+import viewmodel.CarImageViewModel
 
 object Registration : Tab, Screen {
     private lateinit var response: Response
@@ -111,9 +107,9 @@ object Registration : Tab, Screen {
             val sendScope = rememberCoroutineScope()
             var refreshing by remember { mutableStateOf(false) }
             val navigator = LocalNavigator.currentOrThrow
-            var email by remember { mutableStateOf(email) }
-            var login by remember { mutableStateOf(login) }
-            var phone by remember { mutableStateOf(phone) }
+            val email by remember { mutableStateOf(email) }
+            val login by remember { mutableStateOf(login) }
+            val phone by remember { mutableStateOf(phone) }
             fun refresh() = refreshScope.launch {
                 refreshing = true
                 CarImageViewModel.log.i { "refreshing..." }
@@ -130,8 +126,6 @@ object Registration : Tab, Screen {
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                val userVM = getViewModel(Unit, viewModelFactory { UserViewModel() })
-                val userState by userVM.uiState.collectAsState()
                 Column(
                     modifier = Modifier
                         .padding(top = 50.dp, start = 5.dp, end = 5.dp)
