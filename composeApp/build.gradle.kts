@@ -7,6 +7,8 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsCompose)
     kotlin("plugin.serialization")
+    id("com.google.gms.google-services")
+    id("com.google.relay") version "0.3.04"
 }
 
 kotlin {
@@ -34,6 +36,9 @@ kotlin {
         androidMain.dependencies {
             implementation(libs.compose.ui.tooling.preview)
             implementation(libs.androidx.activity.compose)
+            implementation("androidx.fragment:fragment-ktx:1.6.2")
+            implementation(project.dependencies.platform("com.google.firebase:firebase-bom:32.7.1"))
+            implementation(project.dependencies.platform("com.google.firebase:firebase-bom:32.7.1"))
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -52,6 +57,9 @@ kotlin {
             api("dev.icerock.moko:mvvm-core:0.16.1") // only ViewModel, EventsDispatcher, Dispatchers.UI
             api("dev.icerock.moko:mvvm-compose:0.16.1")
             api("org.lighthousegames:logging:1.3.0")
+            api("io.github.kevinnzou:compose-webview-multiplatform:1.8.6")
+            implementation("dev.icerock.moko:biometry:0.4.0")
+            implementation("dev.icerock.moko:biometry-compose:0.4.0")
         }
         iosMain.dependencies {
             implementation("io.ktor:ktor-client-darwin:2.3.5")

@@ -76,7 +76,7 @@ class MenuScreen : Screen {
                             .padding(10.dp)
                     )
                 }
-                item {
+                    item {
                     Button(
                         onClick = {
 
@@ -108,7 +108,7 @@ class MenuScreen : Screen {
                 item {
                     Button(
                         onClick = {
-
+                            bottomSheetNavigator.show(HelpScreen())
                         },
                         modifier = Modifier
                             .padding(10.dp)
@@ -137,7 +137,7 @@ class MenuScreen : Screen {
                 item {
                     Button(
                         onClick = {
-
+                            bottomSheetNavigator.show(TermsScreen())
                         },
                         modifier = Modifier
                             .padding(10.dp)
@@ -195,7 +195,7 @@ class MenuScreen : Screen {
                 item {
                     Button(
                         onClick = {
-
+                            bottomSheetNavigator.show(AboutScreen())
                         },
                         modifier = Modifier
                             .padding(10.dp)

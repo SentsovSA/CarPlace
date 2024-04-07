@@ -47,9 +47,18 @@
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>NSAppTransportSecurity</key>
-          <dict>
-            <key>NSAllowsArbitraryLoads</key>
-            <true/>
-          </dict>
+	<dict>
+		<key>NSExceptionDomains</key>
+		<dict/>
+		<key>http://127.0.0.1:8000/</key>
+		<dict>
+			<key>NSExceptionAllowsInsecureHTTPLoads</key>
+			<false/>
+		</dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
+	<key>NSFaceIDUsageDescription</key>
+	<string>$(PRODUCT_NAME) Authentication with TouchId or FaceID</string>
 </dict>
 </plist>

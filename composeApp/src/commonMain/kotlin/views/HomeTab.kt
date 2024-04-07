@@ -63,6 +63,8 @@ import cafe.adriel.voyager.navigator.bottomSheet.BottomSheetNavigator
 import cafe.adriel.voyager.navigator.bottomSheet.LocalBottomSheetNavigator
 import cafe.adriel.voyager.navigator.tab.Tab
 import cafe.adriel.voyager.navigator.tab.TabOptions
+import com.multiplatform.webview.web.WebView
+import com.multiplatform.webview.web.rememberWebViewState
 import dev.icerock.moko.mvvm.compose.getViewModel
 import dev.icerock.moko.mvvm.compose.viewModelFactory
 import io.kamel.image.KamelImage
@@ -135,6 +137,7 @@ object HomeTab : Tab, Screen {
         var refreshing by remember { mutableStateOf(false) }
         val snackbarHostState = remember { SnackbarHostState() }
         val bottomSheetNavigator = LocalBottomSheetNavigator.current
+        val webViewState = rememberWebViewState("https://docs.google.com/document/d/1YoHeZajFQu6yUYx7IvGfYvulW0GtGsEjd8bQ3WkVF-A/edit?usp=sharing")
         fun refresh() = refreshScope.launch {
             refreshing = true
             log.i { "refreshing..." }
@@ -360,6 +363,8 @@ object HomeTab : Tab, Screen {
     @Composable
     fun AutoPartChoose(
     ) {
+        val autoColor = false
+        val partColor = false
         Row(
             modifier = Modifier
                 .padding(start = 5.dp, end = 5.dp, top = 15.dp, bottom = 15.dp)
@@ -370,6 +375,7 @@ object HomeTab : Tab, Screen {
                 onClick = {
                     selectedAuto = !selectedAuto
                     selectedParts = false
+                    !autoColor
                 },
                 shape = RoundedCornerShape(10.dp),
                 modifier = Modifier
@@ -377,7 +383,7 @@ object HomeTab : Tab, Screen {
                     .weight(50f),
                 selected = selectedAuto,
                 colors = ChipDefaults.filterChipColors(
-                    if (selectedAuto) Color(0xFFFFFFFF) else Color(0xFFC5C5C5),
+                    if (autoColor) Color(0xFFFFFFFF) else Color(0xFFC5C5C5),
                 )
             ) {
                 Text(
@@ -391,6 +397,7 @@ object HomeTab : Tab, Screen {
                 onClick = {
                     selectedParts = !selectedParts
                     selectedAuto = false
+                    !partColor
                 },
                 shape = RoundedCornerShape(10.dp),
                 modifier = Modifier
@@ -398,7 +405,7 @@ object HomeTab : Tab, Screen {
                     .weight(50f),
                 selected = selectedParts,
                 colors = ChipDefaults.filterChipColors(
-                    if (selectedParts) Color(0xFFFFFFFF) else Color(0xFFC5C5C5),
+                    if (partColor) Color(0xFFFFFFFF) else Color(0xFFC5C5C5),
                 )
 
             ) {
