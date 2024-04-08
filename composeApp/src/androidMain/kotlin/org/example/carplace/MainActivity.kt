@@ -22,7 +22,7 @@ class MainActivity : FragmentActivity() {
         super.onCreate(savedInstanceState)
         AppCenter.start(
             application, "fcecb8a4-1e13-4fe0-adeb-611be1e9aafb",
-            Analytics::class.java, Crashes::class.java, Distribute::class.java
+            Analytics::class.java, Distribute::class.java
         )
 
         setContent {
