@@ -1,5 +1,4 @@
 *.iml
-.gradle
 **/build/
 xcuserdata
 !src/**/build/
