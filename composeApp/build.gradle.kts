@@ -39,6 +39,10 @@ kotlin {
             implementation("androidx.fragment:fragment-ktx:1.6.2")
             implementation(project.dependencies.platform("com.google.firebase:firebase-bom:32.7.1"))
             implementation(project.dependencies.platform("com.google.firebase:firebase-bom:32.7.1"))
+            implementation ("com.microsoft.appcenter:appcenter-analytics:5.0.4")
+            implementation ("com.microsoft.appcenter:appcenter-crashes:5.0.4")
+            implementation ("com.microsoft.appcenter:appcenter-distribute:5.0.4")
+            implementation ("com.microsoft.appcenter:appcenter-distribute-play:5.0.4")
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -90,6 +94,15 @@ android {
     buildTypes {
         getByName("release") {
             isMinifyEnabled = false
+        }
+    }
+    flavorDimensions.add("distribute")
+    productFlavors {
+        create("appCenter") {
+            dimension = "distribute"
+        }
+        create("googlePlay") {
+            dimension = "distribute"
         }
     }
     compileOptions {

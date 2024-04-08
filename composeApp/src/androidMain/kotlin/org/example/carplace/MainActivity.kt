@@ -6,6 +6,10 @@ import androidx.activity.compose.setContent
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.fragment.app.FragmentActivity
+import com.microsoft.appcenter.AppCenter
+import com.microsoft.appcenter.analytics.Analytics
+import com.microsoft.appcenter.crashes.Crashes
+import com.microsoft.appcenter.distribute.Distribute
 import dev.icerock.moko.biometry.compose.BindBiometryAuthenticatorEffect
 import dev.icerock.moko.biometry.compose.BiometryAuthenticatorFactory
 import dev.icerock.moko.biometry.compose.rememberBiometryAuthenticatorFactory
@@ -16,6 +20,10 @@ class MainActivity : FragmentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        AppCenter.start(
+            application, "fcecb8a4-1e13-4fe0-adeb-611be1e9aafb",
+            Analytics::class.java, Crashes::class.java, Distribute::class.java
+        )
 
         setContent {
             val biometryFactory: BiometryAuthenticatorFactory = rememberBiometryAuthenticatorFactory()
